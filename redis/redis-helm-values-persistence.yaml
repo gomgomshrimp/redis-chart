@@ -1,0 +1,25 @@
+global:
+  storageClass: nks-block-storage
+commonAnnotations:
+  helm.sh/hook: pre-install
+  helm.sh/hook-weight: "-5"
+architecture: replication
+master:
+  service:
+    type: ClusterIP
+  persistence:
+    enabled: true
+    size: 2Gi
+  tolerations:
+    - key: "node-role.kubernetes.io/lge-robot-control-qa"
+      operator: "Exists"
+      effect: "NoSchedule"
+replica:
+  replicaCount: 3
+  persistence:
+    enabled: true
+    size: 2Gi
+  tolerations:
+    - key: "node-role.kubernetes.io/lge-robot-control-qa"
+      operator: "Exists"
+      effect: "NoSchedule"
