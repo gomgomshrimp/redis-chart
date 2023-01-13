@@ -10,8 +10,6 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/component: master
   annotations:
-    helm.sh/hook: pre-install
-    helm.sh/hook-weight: "-5"
 spec:
   replicas: 1
   selector:
