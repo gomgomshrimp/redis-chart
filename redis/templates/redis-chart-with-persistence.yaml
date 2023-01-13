@@ -1,15 +1,43 @@
+---
+# Source: redis/templates/serviceaccount.yaml
 apiVersion: v1
 kind: ServiceAccount
 automountServiceAccountToken: true
 metadata:
   name: redis-cluster
-  namespace: {{ .Release.Namespace | quote }}
+  namespace: "lge-cpl-qa"
+  labels:
+    app.kubernetes.io/name: redis
+    helm.sh/chart: redis-17.4.0
+    app.kubernetes.io/instance: redis-cluster
+    app.kubernetes.io/managed-by: Helm
 ---
+# Source: redis/templates/secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-cluster
+  namespace: "lge-cpl-qa"
+  labels:
+    app.kubernetes.io/name: redis
+    helm.sh/chart: redis-17.4.0
+    app.kubernetes.io/instance: redis-cluster
+    app.kubernetes.io/managed-by: Helm
+type: Opaque
+data:
+  redis-password: "aG50TkphanVlMA=="
+---
+# Source: redis/templates/configmap.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: redis-cluster-configuration
-  namespace: {{ .Release.Namespace | quote }}
+  namespace: "lge-cpl-qa"
+  labels:
+    app.kubernetes.io/name: redis
+    helm.sh/chart: redis-17.4.0
+    app.kubernetes.io/instance: redis-cluster
+    app.kubernetes.io/managed-by: Helm
 data:
   redis.conf: |-
     # User-supplied common configuration:
@@ -36,7 +64,12 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: redis-cluster-health
-  namespace: {{ .Release.Namespace | quote }}
+  namespace: "lge-cpl-qa"
+  labels:
+    app.kubernetes.io/name: redis
+    helm.sh/chart: redis-17.4.0
+    app.kubernetes.io/instance: redis-cluster
+    app.kubernetes.io/managed-by: Helm
 data:
   ping_readiness_local.sh: |-
     #!/bin/bash
@@ -138,7 +171,12 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: redis-cluster-scripts
-  namespace: {{ .Release.Namespace | quote }}
+  namespace: "lge-cpl-qa"
+  labels:
+    app.kubernetes.io/name: redis
+    helm.sh/chart: redis-17.4.0
+    app.kubernetes.io/instance: redis-cluster
+    app.kubernetes.io/managed-by: Helm
 data:
   start-master.sh: |
     #!/bin/bash
@@ -207,21 +245,19 @@ data:
     ARGS+=("--include" "/opt/bitnami/redis/etc/replica.conf")
     exec redis-server "${ARGS[@]}"
 ---
-apiVersion: v1
-kind: Secret
-metadata:
-  name: redis-cluster
-  namespace: {{ .Release.Namespace | quote }}
-type: Opaque
-data:
-  redis-password: "aG50TkphanVlMA=="
----
 # Source: redis/templates/headless-svc.yaml
 apiVersion: v1
 kind: Service
 metadata:
   name: redis-cluster-headless
-  namespace: {{ .Release.Namespace | quote }}
+  namespace: "lge-cpl-qa"
+  labels:
+    app.kubernetes.io/name: redis
+    helm.sh/chart: redis-17.4.0
+    app.kubernetes.io/instance: redis-cluster
+    app.kubernetes.io/managed-by: Helm
+  annotations:
+    
 spec:
   type: ClusterIP
   clusterIP: None
@@ -238,7 +274,13 @@ apiVersion: v1
 kind: Service
 metadata:
   name: redis-cluster-master
-  namespace: {{ .Release.Namespace | quote }}
+  namespace: "lge-cpl-qa"
+  labels:
+    app.kubernetes.io/name: redis
+    helm.sh/chart: redis-17.4.0
+    app.kubernetes.io/instance: redis-cluster
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: master
 spec:
   type: ClusterIP
   internalTrafficPolicy: Cluster
@@ -258,7 +300,13 @@ apiVersion: v1
 kind: Service
 metadata:
   name: redis-cluster-replicas
-  namespace: {{ .Release.Namespace | quote }}
+  namespace: "lge-cpl-qa"
+  labels:
+    app.kubernetes.io/name: redis
+    helm.sh/chart: redis-17.4.0
+    app.kubernetes.io/instance: redis-cluster
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: replica
 spec:
   type: ClusterIP
   internalTrafficPolicy: Cluster
@@ -273,14 +321,17 @@ spec:
     app.kubernetes.io/instance: redis-cluster
     app.kubernetes.io/component: replica
 ---
+# Source: redis/templates/master/application.yaml
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: redis-cluster-master
-  namespace: {{ .Release.Namespace | quote }}
+  namespace: "lge-cpl-qa"
   labels:
     app.kubernetes.io/name: redis
+    helm.sh/chart: redis-17.4.0
     app.kubernetes.io/instance: redis-cluster
+    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/component: master
 spec:
   replicas: 1
@@ -296,21 +347,23 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: redis
+        helm.sh/chart: redis-17.4.0
         app.kubernetes.io/instance: redis-cluster
+        app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/component: master
       annotations:
-        checksum/configmap: 714bb13d2ad486ee3d1ac08c4637605f557de29ec3e5c787942442d473dc0669
-        checksum/health: 4d29ea4bed594397d938b793f2887372b27abf79b2674e651d2a6c4b8997e3cd
-        checksum/scripts: 07114f8021cf44b565e53df3f21bb90b744b4019b19d1d35af55344abc06a780
-        checksum/secret: 9a260daa3d87d2cf07821cfa7188297dadd902187879bbe6b5f99f9509fd8175
+        checksum/configmap: f06547945f68ab53448575da47b39995c0bf31652e9ada8ecef91a77610c2325
+        checksum/health: 7523e3712714951d6b136f162d5102f9f8f37ed42d7ab5b2ee4217e8f531466d
+        checksum/scripts: ffd537ea3bc38156f73b5d5b2d6e351a053e38e17b27c14e9870d6cdbab6c009
+        checksum/secret: df0cb7fae36142eb736bea16bc708cc3feabfe365fa236a543d6b5949f2cd43b
     spec:
-
+      
       securityContext:
         fsGroup: 1001
       serviceAccountName: redis-cluster
       affinity:
         podAffinity:
-
+          
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
             - podAffinityTerm:
@@ -322,7 +375,7 @@ spec:
                 topologyKey: kubernetes.io/hostname
               weight: 1
         nodeAffinity:
-
+          
       tolerations:
         - effect: NoSchedule
           key: node-role.kubernetes.io/lge-robot-control-qa
@@ -433,12 +486,13 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: redis-cluster-replicas
-  namespace: {{ .Release.Namespace | quote }}
+  namespace: "lge-cpl-qa"
   labels:
     app.kubernetes.io/name: redis
+    helm.sh/chart: redis-17.4.0
     app.kubernetes.io/instance: redis-cluster
+    app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/component: replica
-
 spec:
   replicas: 3
   selector:
@@ -453,21 +507,23 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: redis
+        helm.sh/chart: redis-17.4.0
         app.kubernetes.io/instance: redis-cluster
+        app.kubernetes.io/managed-by: Helm
         app.kubernetes.io/component: replica
       annotations:
-        checksum/configmap: 714bb13d2ad486ee3d1ac08c4637605f557de29ec3e5c787942442d473dc0669
-        checksum/health: 4d29ea4bed594397d938b793f2887372b27abf79b2674e651d2a6c4b8997e3cd
-        checksum/scripts: 07114f8021cf44b565e53df3f21bb90b744b4019b19d1d35af55344abc06a780
-        checksum/secret: 9a260daa3d87d2cf07821cfa7188297dadd902187879bbe6b5f99f9509fd8175
+        checksum/configmap: f06547945f68ab53448575da47b39995c0bf31652e9ada8ecef91a77610c2325
+        checksum/health: 7523e3712714951d6b136f162d5102f9f8f37ed42d7ab5b2ee4217e8f531466d
+        checksum/scripts: ffd537ea3bc38156f73b5d5b2d6e351a053e38e17b27c14e9870d6cdbab6c009
+        checksum/secret: df0cb7fae36142eb736bea16bc708cc3feabfe365fa236a543d6b5949f2cd43b
     spec:
-
+      
       securityContext:
         fsGroup: 1001
       serviceAccountName: redis-cluster
       affinity:
         podAffinity:
-
+          
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
             - podAffinityTerm:
@@ -479,7 +535,7 @@ spec:
                 topologyKey: kubernetes.io/hostname
               weight: 1
         nodeAffinity:
-
+          
       tolerations:
         - effect: NoSchedule
           key: node-role.kubernetes.io/lge-robot-control-qa
@@ -596,4 +652,3 @@ spec:
           requests:
             storage: "2Gi"
         storageClassName: nks-block-storage
-        
